@@ -74,6 +74,8 @@ defmodule App.FineTest do
 end
 ```
 
+[More examples as tests](https://github.com/vic/test_async/blob/master/test/test_async_test.exs)
+
 ## Gotchas
 
 #### Current module
