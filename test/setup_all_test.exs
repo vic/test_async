@@ -1,14 +1,4 @@
-defmodule TestAsync.CallOnce do
-
-  @moduledoc """
-  A simple genserver that will fail
-  if called more than once.
-
-  Used to test that `setup_all` is
-  called only once before two concurrent
-  tests.
-  """
-
+defmodule TestAsync.Inc do
   use GenServer
 
   def start do
@@ -19,14 +9,12 @@ defmodule TestAsync.CallOnce do
     GenServer.stop(__MODULE__, :shutdown)
   end
 
-  def once! do
+  def next do
     GenServer.call(__MODULE__, :next)
   end
 
-  def handle_call(:next, _from, 0),
-  do: {:reply, 1, 1}
-  def handle_call(:next, _from, _),
-  do: {:error, :already_called_once}
+  def handle_call(:next, _from, n),
+  do: {:reply, n + 1, n + 1}
 end
   
 
@@ -34,23 +22,28 @@ defmodule TestAsync.SetupAllTest do
   use ExUnit.Case
   use TestAsync
 
-  alias TestAsync.CallOnce, as: Once
-  Once.start
+  alias TestAsync.Inc
+  Inc.start
 
-  setup_all context do
-    on_exit &Once.stop/0
+  def once(context) do
     context
     |> Map.put(:setup_pid, current())
-    |> Map.put(:once, Once.once!())
+    |> Map.put(:once, Inc.next())
   end
+
+  setup_all :once
 
   def current, do: self()
 
-  test "each test has own process", %{setup_pid: setup_id} do
+  test "each test has own process", %{setup_pid: setup_id, once: n, async: async} do
+    assert async
     assert current() != setup_id
+    assert n == 2
   end
 
-  test "another process", %{setup_pid: setup_id} do
+  test "another process", %{setup_pid: setup_id, once: n, async: async} do
+    assert async
     assert current() != setup_id
+    assert n == 1
   end
 end

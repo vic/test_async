@@ -3,12 +3,50 @@ defmodule TestAsync.Callbacks do
   
   def using(template, env) do
     create_template(template, env)
+    Module.register_attribute(env.module, :async_tests, accumulate: true, persist: true)
     quote do
       @after_compile unquote(__MODULE__)
-      Module.register_attribute(unquote(env.module), :async_tests, accumulate: true, persist: true)
-      import ExUnit.Case, except: [test: 2]
+      import ExUnit.Case, except: [test: 2, test: 3]
       import TestAsync
     end
+  end
+
+  def define(args) do
+    args = Macro.escape(args)
+    quote do
+      unquote(__MODULE__).register(unquote(args), __ENV__)
+    end
+  end
+
+
+  def register(args = [name | _], env) do
+    mod = env.module
+
+    accumulates_attributes = [:tag, :describetag, :moduletag, :ex_unit_registered]
+    accumulates = for k <- accumulates_attributes, do: {k, Module.get_attribute(mod, k)}
+
+    additional_attributes = [:ex_unit_describe, :describetag, :ex_unit_setup, :ex_unit_setup_all]
+    additional = for k <- additional_attributes, do: {k, Module.get_attribute(mod, k)}
+
+    registered_attributes = Module.get_attribute(mod, :ex_unit_registered)
+    registered = for(k <- registered_attributes, do: {k, Module.get_attribute(mod, k)})
+
+    Enum.each [:tag | registered_attributes], fn(attribute) ->
+      Module.delete_attribute(mod, attribute)
+    end
+
+    kw = [
+      mod: mod,
+      args: args,
+      location: Macro.Env.location(env),
+      registered: registered,
+      additional: additional,
+      accumulates: accumulates
+    ]
+
+    Module.put_attribute(mod, :async_tests, kw)
+
+    name
   end
 
   def __after_compile__(env, _bytecode) do
@@ -28,7 +66,13 @@ defmodule TestAsync.Callbacks do
     :ok
   end
 
-  defp create_test({name, body, location}, env) do
+  defp create_test(keyword, env) do
+    args = [name | _] = Keyword.get(keyword, :args)
+    registered = Keyword.get(keyword, :registered) |> Macro.escape
+    additional = Keyword.get(keyword, :additional) |> Macro.escape
+    accumulates = Keyword.get(keyword, :accumulates) |> Macro.escape
+    location = Keyword.get(keyword, :location)
+
     origin_module = env.module
     template_module = Module.concat(env.module, CaseTemplate)
 
@@ -44,7 +88,17 @@ defmodule TestAsync.Callbacks do
       use ExUnit.Case, async: true
       use unquote(template_module)
       import unquote(origin_module)
-      test unquote(name), unquote(body)
+
+      for {k,vs} <- unquote(accumulates), v <- Enum.reverse(vs),
+      do: Module.put_attribute(__MODULE__, k, v)
+
+      for {k,v} <- unquote(registered),
+      do: Module.put_attribute(__MODULE__, k, v)
+
+      for {k,v} <- unquote(additional),
+      do: Module.put_attribute(__MODULE__, k, v)
+
+      test(unquote_splicing(args))
     end
 
     Module.create(mod_name, quoted, location)

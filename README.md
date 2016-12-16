@@ -93,6 +93,12 @@ defmodule App.NamedTest do
 end
 ```
 
+#### Setup functions
+
+`setup` and `setup_all` are supported but only if they are given a
+function name. And `setup_all` is run for every test instead of just
+once as now every test was turned into its own test case.
+
 #### Private functions 
 
 Private functions defined on the parent module cannot be seen inside
@@ -110,6 +116,8 @@ defmodule App.SomeTest do
   end
 end
 ```
+
+#### Shared case template
 
 However you can give `use TestAsync` a `do` block, which will be
 turned into a shared `ExUnit.CaseTemplate`.

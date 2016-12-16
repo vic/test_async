@@ -28,18 +28,8 @@ defmodule TestAsyncTest do
     end
   end
 
-  describe "pids" do
-    test "pid one" do
-      self() |> IO.inspect
-    end
-
-    test "pid two" do
-      self() |> IO.inspect
-    end
-  end
-
   describe "module names" do
-    test "module name" do
+    test "module name", %{async: true} do
       assert __MODULE__ == TestAsyncTest.ModuleNameTest
     end
 
