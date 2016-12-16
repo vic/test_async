@@ -5,7 +5,7 @@ Make tests inside your ExUnit case to run async.
 
 ## Installation
 
-[Available in Hex](https://hex.pm/package/test_async), the package can be installed
+[Available in Hex](https://hex.pm/packages/test_async), the package can be installed
 by adding `test_async` to your list of dependencies in `mix.exs`:
 
 ```elixir
