@@ -121,6 +121,7 @@ end
 
 However you can give `use TestAsync` a `do` block, which will be
 turned into a shared `ExUnit.CaseTemplate`.
+When using your own templates, do so on the do block.
 
 ```elixir
 defmodule App.NinjaTest do
@@ -128,6 +129,7 @@ defmodule App.NinjaTest do
 
   use TestAsync do
     defp hidden, do: :ninja
+    use App.MyTestTemplate
   end
 
   test "can be seen" do
