@@ -1,12 +1,12 @@
 defmodule TestAsync.Callbacks do
   @moduledoc false
-  
+
   def using(template, env) do
     create_template(template, env)
     Module.register_attribute(env.module, :async_tests, accumulate: true, persist: true)
     quote do
       @after_compile unquote(__MODULE__)
-      import ExUnit.Case, except: [test: 2, test: 3]
+      import ExUnit.Case, except: [test: 1, test: 2, test: 3]
       import TestAsync
     end
   end
@@ -76,7 +76,7 @@ defmodule TestAsync.Callbacks do
     origin_module = env.module
     template_module = Module.concat(env.module, CaseTemplate)
 
-    mod_name = 
+    mod_name =
       name
       |> String.replace(~r/[^\w\d]+/, "_")
       |> (&"#{&1}_test").()
@@ -86,20 +86,27 @@ defmodule TestAsync.Callbacks do
 
     quoted = quote do
       use ExUnit.Case, async: true
+
       use unquote(template_module)
       import unquote(origin_module)
 
       for {k,vs} <- unquote(accumulates), v <- Enum.reverse(vs),
-      do: Module.put_attribute(__MODULE__, k, v)
-
-      for {k,v} <- unquote(registered),
-      do: Module.put_attribute(__MODULE__, k, v)
+        do: Module.put_attribute(__MODULE__, k, v)
 
       for {k,v} <- unquote(additional),
-      do: Module.put_attribute(__MODULE__, k, v)
+        k != :ex_unit_setup_all && k != :ex_unit_setup,
+        do: Module.put_attribute(__MODULE__, k, v)
+
+      for {k,v} <- unquote(registered),
+        do: Module.put_attribute(__MODULE__, k, v)
+
+      for {k,v} <- unquote(additional),
+        k == :ex_unit_setup_all || k == :ex_unit_setup,
+        do: @ex_unit_setup (v ++ @ex_unit_setup)
 
       test(unquote_splicing(args))
     end
+    # |> fn x -> IO.puts(Macro.to_string(x)); x end.()
 
     Module.create(mod_name, quoted, location)
     :ok

@@ -10,7 +10,7 @@ by adding `test_async` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
-  [{:test_async, "~> 0.1.0", only: :test, runtime: false}]
+  [{:test_async, "~> 0.1", only: :test, runtime: false}]
 end
 ```
 

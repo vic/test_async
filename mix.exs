@@ -3,7 +3,7 @@ defmodule TestAsync.Mixfile do
 
   def project do
     [app: :test_async,
-     version: "0.1.1",
+     version: "0.1.2",
      elixir: "~> 1.3",
      elixirc_paths: elixirc_paths(Mix.env),
      description: description(),
