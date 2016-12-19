@@ -4,11 +4,11 @@ defmodule TestAsync.SetupTest.One do
   using do
     quote do
       import unquote(__MODULE__)
-      setup :one
+      setup do
+        %{one: 1}
+      end
     end
   end
-
-  def one(ctx), do: Map.put(ctx, :one, 1)
 end
 
 defmodule TestAsync.SetupTest.Two do

@@ -95,9 +95,9 @@ end
 
 #### Setup functions
 
-`setup` and `setup_all` are supported but only if they are given a
-function name. And `setup_all` is run for every test instead of just
-once as now every test was turned into its own test case.
+`setup` and `setup_all` are supported.
+Note that now `setup_all` is run for every test 
+because it will be live on its own test case.
 
 #### Private functions 
 
